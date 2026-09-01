@@ -1,0 +1,6 @@
+{
+  "name": "DuressGuard - Android Duress PIN Security Suite",
+  "description": "Suite de arquitectura de seguridad móvil, emulador interactivo de coacción y código fuente Kotlin para Duress PIN, bóveda señuelo y borrado seguro.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
