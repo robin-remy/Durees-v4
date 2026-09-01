@@ -207,11 +207,10 @@ export default function App() {
             <div className="lg:col-span-5 flex flex-col items-center">
               <div className="mb-3 text-center">
                 <span className="text-[11px] font-mono text-emerald-400 bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-800/50">
-                  Simulador de Android 14/15
+                  Pantalla de Bloqueo Android 14/15
                 </span>
                 <p className="text-xs text-slate-400 mt-1">
-                  Introduce <strong className="text-emerald-400">{config.realPin}</strong> (Real) o{' '}
-                  <strong className="text-rose-400">{config.duressPin}</strong> (Coacción)
+                  1. Desbloqueo Apps: <strong className="text-emerald-400">{config.realPin}</strong> | 2. Auto Wipe: <strong className="text-rose-400">{config.duressPin}</strong>
                 </p>
               </div>
 
@@ -219,38 +218,61 @@ export default function App() {
                 config={config}
                 onAddLog={addLog}
                 onMemoryStateChange={(state) => setMemoryState(state)}
+                onOpenSettings={() => setIsSettingsOpen(true)}
               />
             </div>
 
             {/* Right Column: Forensic Inspector & Logcat Console */}
             <div className="lg:col-span-7 flex flex-col gap-6">
-              {/* Quick Summary Banner */}
-              <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900 to-emerald-950/30 border border-slate-800 flex items-start justify-between gap-4">
-                <div>
-                  <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                    Acción de Coacción Configurada: [{config.duressAction}]
-                  </h3>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    {config.duressAction === 'DECOY_VAULT' &&
-                      'Plausible Deniability: Al teclear el PIN de Coacción se desbloquea una Bóveda Señuelo con notas cotidianas reales y se destruye la clave real en RAM sin levantar sospechas.'}
-                    {config.duressAction === 'SILENT_APP_WIPE' &&
-                      'Borrado Local: Destruye inmediatamente el alias en Android Keystore y sobreescribe los archivos locales con 0x00/0xFF.'}
-                    {config.duressAction === 'FULL_DEVICE_WIPE' &&
-                      'Device Admin: Ejecuta DevicePolicyManager.wipeData() silenciosamente formateando todo el teléfono.'}
-                    {config.duressAction === 'SILENT_SOS_ALERT' &&
-                      `Alerta SMS Silenciosa: Envía coordenadas GPS fijadas a ${config.sosEmergencyNumber} y abre la Bóveda Señuelo.`}
-                    {config.duressAction === 'LOCK_IMMEDIATE' &&
-                      'Bloqueo Forzado: Apaga la pantalla y purga la clave mediante lockNow().'}
-                  </p>
+              {/* Dual-Code Operation & Permissions Banner */}
+              <div className="p-5 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900 to-emerald-950/40 border border-slate-800 flex flex-col gap-3">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-emerald-400" />
+                      Pantalla de Bloqueo & 2 Códigos Operativos
+                    </h3>
+                    <p className="text-xs text-slate-300 leading-relaxed mt-1">
+                      El dispositivo actúa como la <strong>Pantalla de Bloqueo del Smartphone</strong>. Con los permisos concedidos por el usuario (Device Admin, Superposición, Accesibilidad y Home Launcher), opera con 2 códigos:
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => setIsSettingsOpen(true)}
+                    className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-semibold text-slate-200 border border-slate-700 shrink-0 transition-colors"
+                  >
+                    Ajustes
+                  </button>
                 </div>
 
-                <button
-                  onClick={() => setIsSettingsOpen(true)}
-                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-semibold text-slate-200 border border-slate-700 shrink-0 transition-colors"
-                >
-                  Cambiar
-                </button>
+                {/* 2 Codes Visual Comparison */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  {/* Code 1 */}
+                  <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-800/50 flex flex-col justify-between">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[11px] font-bold text-emerald-300">1. Código de Desbloqueo</span>
+                      <span className="font-mono text-xs font-extrabold text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800/60">
+                        {config.realPin}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-300 leading-normal">
+                      Desbloquea el teléfono y da <strong>acceso completo al escritorio, apps (Galería, Bóveda, Mensajes, Teléfono)</strong> e información confidencial.
+                    </p>
+                  </div>
+
+                  {/* Code 2 */}
+                  <div className="p-3 rounded-xl bg-rose-950/40 border border-rose-800/50 flex flex-col justify-between">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[11px] font-bold text-rose-300">2. Código de Borrado</span>
+                      <span className="font-mono text-xs font-extrabold text-rose-400 bg-rose-950 px-2 py-0.5 rounded border border-rose-800/60">
+                        {config.duressPin}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-300 leading-normal">
+                      <strong>Automático e inmediato</strong>: Sin confirmaciones ni ventanas, invoca <code className="text-rose-300 font-mono text-[10px]">dpm.wipeData()</code> y formatea todo el dispositivo.
+                    </p>
+                  </div>
+                </div>
               </div>
 
               {/* Memory / Forensic Inspector */}

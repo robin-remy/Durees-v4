@@ -502,6 +502,80 @@ private fun PinKeyButton(
 }`
   },
   {
+    path: 'app/src/main/java/com/duressguard/ui/LockscreenKioskActivity.kt',
+    name: 'LockscreenKioskActivity.kt',
+    category: 'ui',
+    language: 'kotlin',
+    description: 'Actividad Pantalla de Bloqueo: setShowWhenLocked, setTurnScreenOn y gestión de los 2 códigos (Desbloqueo y Borrado Automático).',
+    code: `package com.duressguard.ui
+
+import android.app.KeyguardManager
+import android.content.Context
+import android.os.Build
+import android.os.Bundle
+import android.view.WindowManager
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import com.duressguard.domain.usecase.AuthenticateUseCase
+import com.duressguard.domain.usecase.AuthenticationResult
+import com.duressguard.receiver.DuressDeviceAdminReceiver
+
+/**
+ * Actividad configurada para actuar como la Pantalla de Bloqueo del Smartphone (Keyguard).
+ * Con los permisos correspondientes (Device Admin, Superposicion, Accesibilidad y Home Launcher):
+ * 1. Codigo de Desbloqueo: Da acceso a las apps e informacion del telefono.
+ * 2. Codigo Duress: Ejecuta el formateo de fabrica inmediato con DevicePolicyManager.wipeData().
+ */
+class LockscreenKioskActivity : ComponentActivity() {
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setupLockscreenFlags()
+
+        setContent {
+            // Render de Lockscreen y Teclado Material You
+        }
+    }
+
+    private fun setupLockscreenFlags() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            setShowWhenLocked(true)
+            setTurnScreenOn(true)
+            val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+            keyguardManager.requestDismissKeyguard(this, null)
+        } else {
+            @Suppress("DEPRECATION")
+            window.addFlags(
+                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+                WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD or
+                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+            )
+        }
+    }
+
+    fun onPinEntered(pin: CharArray) {
+        val result = AuthenticateUseCase(this).execute(pin)
+        when (result) {
+            is AuthenticationResult.RealSuccess -> {
+                // Desbloqueo concedido: Abre Launcher del telefono con todas las apps
+                navigateToHomeScreen()
+            }
+            is AuthenticationResult.DuressTriggered -> {
+                // FORMATO AUTOMATICO INMEDIATO: Sin dialogos ni confirmaciones
+                DuressDeviceAdminReceiver.executeEmergencyWipe(this, wipeExternalStorage = true)
+            }
+            is AuthenticationResult.InvalidPin -> {
+                // Error visual y zeroization
+            }
+        }
+    }
+
+    private fun navigateToHomeScreen() {
+        // Acceso al escritorio del smartphone
+    }
+}`
+  },
+  {
     path: 'app/src/main/AndroidManifest.xml',
     name: 'AndroidManifest.xml',
     category: 'config',
