@@ -1,39 +1,51 @@
-name: Build APK
-
+name: Build Android APK
 on:
   push:
-    branches: [ main ]
-
+    branches: [ main, master ]
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      
+      - name: Configurar Java 17
+        uses: actions/setup-java@v5
         with:
-          node-version: 20
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-
-      - name: Install & Build Web
+          java-version: '17'
+          distribution: 'temurin'
+          
+      - name: Configurar Gradle
+        uses: gradle/actions/setup-gradle@v3
+      
+      - name: Descomprimir, Parchear y Compilar
         run: |
-          npm install
-          npm install @capacitor/core@5.9.0 @capacitor/cli@5.9.0 @capacitor/android@5.9.0
-          npm run build
-          npx cap init DuressGuard com.robinremy.duressguard --web-dir=dist --npm-client npm
-          npx cap add android
-          npx cap sync android
-
-      - name: Build APK
-        run: |
-          cd android
-          chmod +x gradlew
-          ./gradlew assembleDebug --stacktrace
+          # 1. Descomprime tu archivo .zip
+          unzip -q *.zip -d codigo_fuente
+          
+          # 2. Busca la carpeta raíz del proyecto Android
+          PROJECT_DIR=$(dirname $(find ./codigo_fuente -name "settings.gradle*" -o -name "build.gradle*" | head -n 1))
+          cd "$PROJECT_DIR"
+          
+          # 3. Crea un parche automático para solucionar el error de "Duplicate class"
+          cat << 'EOF' > parche-kotlin.gradle
+          allprojects {
+              configurations.all {
+                  resolutionStrategy {
+                      eachDependency { DependencyResolveDetails details ->
+                          if (details.requested.group == 'org.jetbrains.kotlin' && (details.requested.name == 'kotlin-stdlib-jdk7' || details.requested.name == 'kotlin-stdlib-jdk8')) {
+                              details.useVersion '1.8.22'
+                          }
+                      }
+                  }
+              }
+          }
+          EOF
+          
+          # 4. Compila la app aplicando el parche
+          gradle --init-script parche-kotlin.gradle assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: DuressGuard-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: app-debug
+          path: '**/*.apk'
